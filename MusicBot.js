@@ -13,11 +13,11 @@ client.on('warn', console.warn);
 
 client.on('error', console.error);
 
-client.on('ready', () => console.log('Yo this ready!'));
+client.on('ready', () => console.log('Estou ativado!'));
 
-client.on('disconnect', () => console.log('I just disconnected, making sure you know, I will reconnect now...'));
+client.on('disconnect', () => console.log('Eu havia desconectado, mas estou de volta!'));
 
-client.on('reconnecting', () => console.log('I am reconnecting now!'));
+client.on('reconnecting', () => console.log('Estou reconectando...'));
 
 client.on('message', async msg => { // eslint-disable-line
 	if (msg.author.bot) return undefined;
@@ -33,13 +33,13 @@ client.on('message', async msg => { // eslint-disable-line
 
 	if (command === 'play') {
 		const voiceChannel = msg.member.voiceChannel;
-		if (!voiceChannel) return msg.channel.send('I\'m sorry but you need to be in a voice channel to play music!');
+		if (!voiceChannel) return msg.channel.send('Entre em um canal de voz, assim poderei tocar!');
 		const permissions = voiceChannel.permissionsFor(msg.client.user);
 		if (!permissions.has('CONNECT')) {
-			return msg.channel.send('I cannot connect to your voice channel, make sure I have the proper permissions!');
+			return msg.channel.send('Será que tenho as permissões suficientes para entrar no seu canal? Verifique-as.');
 		}
 		if (!permissions.has('SPEAK')) {
-			return msg.channel.send('I cannot speak in this voice channel, make sure I have the proper permissions!');
+			return msg.channel.send('Será que tenho as permissões suficientes para falar no seu canal? Verifique-as.');
 		}
 
 		if (url.match(/^https?:\/\/(www.youtube.com|youtube.com)\/playlist(.*)$/)) {
@@ -49,7 +49,7 @@ client.on('message', async msg => { // eslint-disable-line
 				const video2 = await youtube.getVideoByID(video.id); // eslint-disable-line no-await-in-loop
 				await handleVideo(video2, msg, voiceChannel, true); // eslint-disable-line no-await-in-loop
 			}
-			return msg.channel.send(`✅ Playlist: **${playlist.title}** has been added to the queue!`);
+			return msg.channel.send(`A playlist **${playlist.title}** foi adicionada na lista! 🎵`);
 		} else {
 			try {
 				var video = await youtube.getVideo(url);
@@ -58,11 +58,11 @@ client.on('message', async msg => { // eslint-disable-line
 					var videos = await youtube.searchVideos(searchString, 10);
 					let index = 0;
 					msg.channel.send(`
-__**Song selection:**__
+__**Selecionar música:**__
 
 ${videos.map(video2 => `**${++index} -** ${video2.title}`).join('\n')}
 
-Please provide a value to select one of the search results ranging from 1-10.
+Dentre estes resultados, escolha o que deseja ouvir utilizando um número de **1 a 10**.
 					`);
 					// eslint-disable-next-line max-depth
 					try {
@@ -73,40 +73,40 @@ Please provide a value to select one of the search results ranging from 1-10.
 						});
 					} catch (err) {
 						console.error(err);
-						return msg.channel.send('No or invalid value entered, cancelling video selection.');
+						return msg.channel.send('Um valor inválido foi inserido.');
 					}
 					const videoIndex = parseInt(response.first().content);
 					var video = await youtube.getVideoByID(videos[videoIndex - 1].id);
 				} catch (err) {
 					console.error(err);
-					return msg.channel.send('🆘 I could not obtain any search results.');
+					return msg.channel.send('Não obti nenhum resultado nessa busca. ❌');
 				}
 			}
 			return handleVideo(video, msg, voiceChannel);
 		}
 	} else if (command === 'skip') {
-		if (!msg.member.voiceChannel) return msg.channel.send('You are not in a voice channel!');
-		if (!serverQueue) return msg.channel.send('There is nothing playing that I could skip for you.');
-		serverQueue.connection.dispatcher.end('Skip command has been used!');
+		if (!msg.member.voiceChannel) return msg.channel.send('Você não está em um canal de voz!');
+		if (!serverQueue) return msg.channel.send('Não estou tocando nada agora para que eu possa pular.');
+		serverQueue.connection.dispatcher.end('Uma música foi pulada!');
 		return undefined;
 	} else if (command === 'stop') {
-		if (!msg.member.voiceChannel) return msg.channel.send('You are not in a voice channel!');
-		if (!serverQueue) return msg.channel.send('There is nothing playing that I could stop for you.');
+		if (!msg.member.voiceChannel) return msg.channel.send('Você não está em um canal de voz!');
+		if (!serverQueue) return msg.channel.send('Não estou tocando nada agora para que eu possa pausar.');
 		serverQueue.songs = [];
-		serverQueue.connection.dispatcher.end('Stop command has been used!');
+		serverQueue.connection.dispatcher.end('Uma música foi pausada!');
 		return undefined;
 	} else if (command === 'volume') {
-		if (!msg.member.voiceChannel) return msg.channel.send('You are not in a voice channel!');
-		if (!serverQueue) return msg.channel.send('There is nothing playing.');
+		if (!msg.member.voiceChannel) return msg.channel.send('Você não está em um canal de voz!');
+		if (!serverQueue) return msg.channel.send('Não estou tocando nada agora.');
 		if (!args[1]) return msg.channel.send(`The current volume is: **${serverQueue.volume}**`);
 		serverQueue.volume = args[1];
 		serverQueue.connection.dispatcher.setVolumeLogarithmic(args[1] / 5);
 		return msg.channel.send(`I set the volume to: **${args[1]}**`);
 	} else if (command === 'np') {
-		if (!serverQueue) return msg.channel.send('There is nothing playing.');
-		return msg.channel.send(`🎶 Now playing: **${serverQueue.songs[0].title}**`);
+		if (!serverQueue) return msg.channel.send('Não estou tocando nada agora.');
+		return msg.channel.send(`🎶 Tocando agora: **${serverQueue.songs[0].title}**.`);
 	} else if (command === 'queue') {
-		if (!serverQueue) return msg.channel.send('There is nothing playing.');
+		if (!serverQueue) return msg.channel.send('Não estou tocando nada agora.');
 		return msg.channel.send(`
 __**Song queue:**__
 
@@ -118,16 +118,16 @@ ${serverQueue.songs.map(song => `**-** ${song.title}`).join('\n')}
 		if (serverQueue && serverQueue.playing) {
 			serverQueue.playing = false;
 			serverQueue.connection.dispatcher.pause();
-			return msg.channel.send('⏸ Paused the music for you!');
+			return msg.channel.send('⏸ Música pausada para você!');
 		}
-		return msg.channel.send('There is nothing playing.');
+		return msg.channel.send('Não estou tocando nada agora.');
 	} else if (command === 'resume') {
 		if (serverQueue && !serverQueue.playing) {
 			serverQueue.playing = true;
 			serverQueue.connection.dispatcher.resume();
-			return msg.channel.send('▶ Resumed the music for you!');
+			return msg.channel.send('▶ Voltei a tocar a música atual!');
 		}
-		return msg.channel.send('There is nothing playing.');
+		return msg.channel.send('Não estou tocando nada agora.');
 	}
 
 	return undefined;
@@ -159,15 +159,15 @@ async function handleVideo(video, msg, voiceChannel, playlist = false) {
 			queueConstruct.connection = connection;
 			play(msg.guild, queueConstruct.songs[0]);
 		} catch (error) {
-			console.error(`I could not join the voice channel: ${error}`);
+			console.error(`Este erro me impossibilitou de entrar no seu canal de voz: ${error}`);
 			queue.delete(msg.guild.id);
-			return msg.channel.send(`I could not join the voice channel: ${error}`);
+			return msg.channel.send(`Este erro me impossibilitou de entrar no seu canal de voz: ${error}.`);
 		}
 	} else {
 		serverQueue.songs.push(song);
 		console.log(serverQueue.songs);
 		if (playlist) return undefined;
-		else return msg.channel.send(`✅ **${song.title}** has been added to the queue!`);
+		else return msg.channel.send(`✅ **${song.title}** foi adicionada na lista!`);
 	}
 	return undefined;
 }
@@ -192,7 +192,7 @@ function play(guild, song) {
 		.on('error', error => console.error(error));
 	dispatcher.setVolumeLogarithmic(serverQueue.volume / 5);
 
-	serverQueue.textChannel.send(`🎶 Start playing: **${song.title}**`);
+	serverQueue.textChannel.send(`🎶 Comecei a tocar a seguinte música: **${song.title}**`);
 }
 
-client.login(TOKEN);
+client.login(process.env.BOT_TOKEN);
